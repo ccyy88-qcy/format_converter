@@ -7,7 +7,7 @@ plugins {
 android {
     namespace "com.alee.formatconverter"
     compileSdk 34
-        ndkVersion = "25.1.8937393"
+    ndkVersion "25.1.8937393"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -34,7 +34,7 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

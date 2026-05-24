@@ -1,0 +1,4 @@
+-keep class io.flutter.** { *; }
+-keep class androidx.lifecycle.** { *; }
+-dontwarn io.flutter.**
+-keep class com.alee.formatconverter.** { *; }

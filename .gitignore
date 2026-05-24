@@ -1,0 +1,10 @@
+/flutter/
+.dart_tool/
+.packages
+.pub-cache/
+build/
+android/.gradle/
+android/local.properties
+android/**/flutter_export_environment.sh
+android/**/GradleWrapperJars/
+gradle-wrapper.jar

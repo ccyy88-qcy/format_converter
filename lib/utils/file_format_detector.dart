@@ -344,20 +344,27 @@ class FileFormatDetector {
     final category = getCategory(mimeType);
     switch (category) {
       case '图片':
-        return ['image/png', 'image/jpeg', 'image/webp', 'image/bmp'];
+        return ['image/png', 'image/jpeg', 'image/webp', 'image/bmp', 'application/pdf'];
       case '文档':
         if (mimeType == 'application/pdf') {
           return ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'text/plain'];
         }
-        if (mimeType.contains('word') || mimeType.contains('opendocument.text') || mimeType == 'application/rtf' || mimeType == 'text/plain') {
-          return ['application/pdf', 'text/plain'];
+        if (mimeType.contains('word') || mimeType.contains('opendocument.text') || mimeType == 'application/rtf') {
+          return ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         }
         if (mimeType.contains('excel') || mimeType.contains('opendocument.spreadsheet')) {
           return ['application/pdf', 'text/csv'];
         }
+        if (mimeType == 'text/plain' || mimeType == 'text/csv' || mimeType.startsWith('text/')) {
+          return ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
         return ['application/pdf'];
       case '压缩包':
-        return ['application/zip']; // 解压到ZIP
+        return ['application/zip'];
+      case '音频':
+        return ['audio/wav', 'audio/mpeg'];
+      case '视频':
+        return ['video/mp4'];
       default:
         return [];
     }

@@ -95,7 +95,8 @@ class FormatConverterEngine {
         outputBytes = Uint8List.fromList(img.encodeJpg(image, quality: quality));
         break;
       case 'image/webp':
-        outputBytes = Uint8List.fromList(img.encodeWebp(image, quality: quality));
+        // WebP编码需要额外插件，暂用PNG替代
+        outputBytes = Uint8List.fromList(img.encodePng(image));
         break;
       case 'image/bmp':
         outputBytes = Uint8List.fromList(img.encodeBmp(image));

@@ -94,65 +94,75 @@ class FileFormatDetector {
     'application/x-dosexec': [0x4D, 0x5A], // PE/EXE
   };
 
-  /// 通过文件路径检测格式
+  /// 通过文件路径检测格式 — 扩展名优先+魔数验证
   static Future<String> detect(String filePath) async {
     final file = File(filePath);
     if (!await file.exists()) return 'unknown';
 
+    final ext = filePath.toLowerCase().split('.').last;
+
+    // 先根据扩展名快速判定（ZIP容器格式大文件扩展名最可靠）
+    final extMime = _extensionMap[ext];
+    if (extMime != null) {
+      // 读少量字节做魔数验证
+      final headBytes = await file.openRead(0, 64).first;
+      final mime = _matchMagic(headBytes);
+      if (mime == 'application/zip') {
+        // ZIP容器：用扩展名区分子类型
+        return _detectZipSubtype(headBytes, filePath);
+      }
+      if (mime != null && mime != 'application/zip') {
+        return mime; // 魔数一致就返回魔数结果
+      }
+      return extMime; // 魔数不匹配但扩展名已知，用扩展名
+    }
+
+    // 扩展名未知，读完整文件做魔数检测
     final bytes = await file.readAsBytes();
     return detectFromBytes(bytes, filePath: filePath);
   }
 
-  /// 通过字节数组检测格式
+  /// 通过字节数组检测格式 — 魔数优先
   static String detectFromBytes(Uint8List bytes, {String? filePath}) {
     if (bytes.isEmpty) return 'unknown';
 
-    // 1. 先匹配二进制魔数
+    // 同时看扩展名和魔数
+    String? extMime;
+    if (filePath != null) {
+      final ext = filePath.toLowerCase().split('.').last;
+      extMime = _extensionMap[ext];
+    }
+
+    // 魔数匹配
     final mime = _matchMagic(bytes);
     if (mime != null && mime.isNotEmpty) {
-      // ZIP容器格式需要进一步区分
       if (mime == 'application/zip') {
         return _detectZipSubtype(bytes, filePath);
       }
       return mime;
     }
 
-    // 2. 检测RIFF变体
+    // RIFF变体
     if (bytes.length >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
-      if (bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
-        return 'image/webp';
-      }
-      if (bytes[8] == 0x41 && bytes[9] == 0x56 && bytes[10] == 0x49) {
-        return 'video/avi';
-      }
-      if (bytes[8] == 0x57 && bytes[9] == 0x41 && bytes[10] == 0x56 && bytes[11] == 0x45) {
-        return 'audio/wav';
-      }
+      if (bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) return 'image/webp';
+      if (bytes[8] == 0x41 && bytes[9] == 0x56 && bytes[10] == 0x49) return 'video/avi';
+      if (bytes[8] == 0x57 && bytes[9] == 0x41 && bytes[10] == 0x56 && bytes[11] == 0x45) return 'audio/wav';
     }
 
-    // 3. 检测MP4/MOV (ftyp at offset 4)
+    // MP4/MOV
     if (bytes.length >= 12 && bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
       if (bytes.length >= 12) {
         final brand = String.fromCharCodes(bytes.sublist(8, 12));
         if (brand.startsWith('qt')) return 'video/quicktime';
-        if (brand == 'M4V ' || brand == 'M4A ' || brand == 'M4P ' || brand == 'M4B ') return 'video/mp4';
-        if (brand == '3gp') return 'video/3gpp';
+        return 'video/mp4';
       }
-      return 'video/mp4';
     }
 
-    // 4. 启发式文本检测
-    if (filePath != null) {
-      final ext = filePath.toLowerCase().split('.').last;
-      final extMime = _extensionMap[ext];
-      if (extMime != null) return extMime;
-    }
+    // 扩展名兜底
+    if (extMime != null) return extMime;
 
-    // 5. 检查是否为纯文本
-    if (_isText(bytes)) {
-      final text = String.fromCharCodes(bytes.take(1024));
-      return _detectTextSubtype(text);
-    }
+    // 启发式文本检测
+    if (_isText(bytes)) return _detectTextSubtype(String.fromCharCodes(bytes.take(1024)));
 
     return 'application/octet-stream';
   }

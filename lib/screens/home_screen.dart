@@ -7,6 +7,7 @@ import '../engines/format_converter_engine.dart';
 import '../widgets/format_selector.dart';
 import '../widgets/convert_progress.dart';
 import '../widgets/result_view.dart';
+import '../widgets/file_browser.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,8 +36,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (result != null && result.files.single.path != null) {
-      final path = result.files.single.path!;
-      final file = File(path);
+      _loadFile(result.files.single.path!);
+    }
+  }
+
+  void _openFileBrowser() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.75,
+        child: FileBrowser(
+          initialPath: '/storage/emulated/0',
+          onFileSelected: (path) {
+            Navigator.pop(ctx);
+            _loadFile(path);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadFile(String path) async {
+    final file = File(path);
 
       setState(() {
         _selectedFile = path;
@@ -197,27 +219,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFilePicker() {
-    return InkWell(
-      onTap: _pickFile,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 48),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
+    return Column(
+      children: [
+        InkWell(
+          onTap: _pickFile,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.blue.shade200, width: 2, strokeAlign: BorderSide.strokeAlignInside),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade200, width: 2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_circle_outline, size: 48, color: Colors.blue.shade400),
+                const SizedBox(height: 12),
+                Text('点击选择文件', style: TextStyle(fontSize: 18, color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text('支持图片、文档、表格、压缩包等', style: TextStyle(fontSize: 13, color: Colors.blue.shade400)),
+              ],
+            ),
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add_circle_outline, size: 48, color: Colors.blue.shade400),
-            const SizedBox(height: 12),
-            Text('点击选择文件', style: TextStyle(fontSize: 18, color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text('支持图片、文档、音频、视频、压缩包', style: TextStyle(fontSize: 13, color: Colors.blue.shade400)),
-          ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _openFileBrowser,
+          icon: const Icon(Icons.folder_open),
+          label: const Text('浏览手机文件夹'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.blue.shade700,
+            minimumSize: const Size(double.infinity, 48),
+          ),
         ),
-      ),
+      ],
     );
   }
 

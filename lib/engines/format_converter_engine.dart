@@ -107,7 +107,8 @@ class FormatConverterEngine {
     if (ext == '.odp') return _zipXmlToPdf(inputPath, outputPath, 'content.xml', cb);
     if (ext == '.epub') return _epubToPdf(inputPath, outputPath, cb);
     if (ext == '.html' || ext == '.htm') {
-      final text = await File(inputPath).readAsString().replaceAll(RegExp(r'<[^>]+>'), '\n');
+      final html = await File(inputPath).readAsString();
+      final text = html.replaceAll(RegExp(r'<[^>]+>'), '\n');
       final tmpFile = File(p.join(outDir, '_tmp.txt'));
       await tmpFile.writeAsString(text);
       final r = await _textToPdf(tmpFile.path, outputPath, cb);
@@ -366,7 +367,6 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
       } else if (ext == '.tar' || ext == '.gz' || ext == '.tgz' || ext == '.bz2') {
         List<int> decodedBytes = bytes;
         if (ext == '.gz' || ext == '.tgz') decodedBytes = GZipDecoder().decodeBytes(bytes);
-        if (ext == '.bz2') decodedBytes = BZip2Decoder().decodeBytes(bytes);
         archive = TarDecoder().decodeBytes(decodedBytes);
       } else {
         return ConversionResult(success: false, error: '不支持解压 $ext');

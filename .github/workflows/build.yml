@@ -39,8 +39,8 @@ jobs:
           echo "keyAlias=release" >> android/key.properties
           echo "storeFile=release.keystore" >> android/key.properties
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build release APK (arm64 only)
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

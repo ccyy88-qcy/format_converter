@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace "com.alee.formatconverter"
-    compileSdk 35
+    compileSdk 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {

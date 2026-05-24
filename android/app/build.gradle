@@ -7,7 +7,7 @@ plugins {
 android {
     namespace "com.alee.formatconverter"
     compileSdk 34
-    ndkVersion "25.1.8937393"
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -34,8 +34,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        minifyEnabled false
+        shrinkResources false
         }
     }
 }

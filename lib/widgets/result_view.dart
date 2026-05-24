@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:open_filex/open_filex.dart';
 import '../engines/format_converter_engine.dart';
 
 class ResultView extends StatelessWidget {
@@ -43,12 +42,12 @@ class ResultView extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      if (result.outputPath != null) {
-                        OpenFilex.open(result.outputPath!);
-                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('文件已保存至: ${result.outputPath}')),
+                      );
                     },
                     icon: const Icon(Icons.folder_open, size: 18),
-                    label: const Text('打开'),
+                    label: const Text('查看路径'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.green.shade700,
                       side: BorderSide(color: Colors.green.shade300),
@@ -59,10 +58,12 @@ class ResultView extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: 系统分享
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('长按文件路径可复制')),
+                      );
                     },
-                    icon: const Icon(Icons.share, size: 18),
-                    label: const Text('分享'),
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text('复制路径'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,

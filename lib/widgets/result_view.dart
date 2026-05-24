@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../engines/format_converter_engine.dart';
 
 class ResultView extends StatelessWidget {
@@ -33,21 +34,43 @@ class ResultView extends StatelessWidget {
                 const Text('转换成功', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text('大小: ${_formatSize(result.fileSize)}',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('保存位置', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                  const SizedBox(height: 4),
+                  Text(result.outputPath ?? '',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    maxLines: 3, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('文件已保存至: ${result.outputPath}')),
-                      );
+                      if (result.outputPath != null) {
+                        Clipboard.setData(ClipboardData(text: result.outputPath!));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('路径已复制')),
+                        );
+                      }
                     },
-                    icon: const Icon(Icons.folder_open, size: 18),
-                    label: const Text('查看路径'),
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text('复制路径'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.green.shade700,
                       side: BorderSide(color: Colors.green.shade300),
@@ -59,11 +82,11 @@ class ResultView extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('长按文件路径可复制')),
+                        SnackBar(content: Text('文件保存在: ${result.outputPath}')),
                       );
                     },
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('复制路径'),
+                    icon: const Icon(Icons.folder_open, size: 18),
+                    label: const Text('打开文件夹'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,

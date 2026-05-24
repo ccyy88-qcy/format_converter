@@ -31,7 +31,7 @@ class FormatConverterEngine {
       if (!await inputFile.exists()) {
         return ConversionResult(success: false, error: '源文件不存在');
       }
-      final outDir = outputDir ?? p.dirname(inputPath);
+      final outDir = outputDir ?? _defaultOutputDir();
       await Directory(outDir).create(recursive: true);
 
       ConversionResult result;
@@ -492,6 +492,15 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
   }
 
   // ==================== 辅助 ====================
+
+  static String _defaultOutputDir() {
+    // Android优先输出到Download文件夹，方便用户找到
+    final downloads = '/storage/emulated/0/Download/格式转换';
+    if (Directory(downloads).existsSync() || Directory('/storage/emulated/0').existsSync()) {
+      return downloads;
+    }
+    return '/data/data/com.termux/files/home/downloads/格式转换';
+  }
 
   static void _addZipEntry(Archive archive, String name, String content) {
     final data = content.codeUnits;

@@ -105,7 +105,7 @@ class FileFormatDetector {
     final extMime = _extensionMap[ext];
     if (extMime != null) {
       // 读少量字节做魔数验证
-      final headBytes = await file.openRead(0, 64).first;
+      final headBytes = Uint8List.fromList(await file.openRead(0, 64).first);
       final mime = _matchMagic(headBytes);
       if (mime == 'application/zip') {
         // ZIP容器：用扩展名区分子类型

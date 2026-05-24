@@ -242,7 +242,7 @@ class FileFormatDetector {
     if (trimmed.startsWith('---') || trimmed.contains(': ') && !trimmed.contains('//')) {
       return 'text/yaml';
     }
-    if (trimmed.contains('import ') || trimmed.contains('def ') || trimmed.includes('class ')) {
+    if (trimmed.contains('import ') || trimmed.contains('def ') || trimmed.contains('class ')) {
       if (trimmed.contains(':') && (trimmed.contains('  ') || trimmed.contains('\t'))) {
         return 'text/x-python';
       }

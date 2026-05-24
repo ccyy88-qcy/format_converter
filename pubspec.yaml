@@ -12,7 +12,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   file_picker: ^8.0.0
   permission_handler: ^11.3.0
-  share_plus: ^9.0.0
   image: ^4.2.0
   pdf: ^3.11.0
   archive: ^3.5.0

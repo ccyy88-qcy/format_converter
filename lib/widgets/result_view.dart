@@ -59,7 +59,7 @@ class ResultView extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: 分享功能
+                      // TODO: 系统分享
                     },
                     icon: const Icon(Icons.share, size: 18),
                     label: const Text('分享'),

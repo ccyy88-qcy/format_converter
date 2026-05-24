@@ -343,28 +343,83 @@ class FileFormatDetector {
   static List<String> getSupportedTargets(String mimeType) {
     final category = getCategory(mimeType);
     switch (category) {
+      // ===== 图片 =====
       case '图片':
-        return ['image/png', 'image/jpeg', 'image/webp', 'image/bmp', 'application/pdf'];
+        return ['image/png', 'image/jpeg', 'image/bmp', 'image/webp', 'image/gif', 'image/tiff', 'application/pdf'];
+
+      // ===== 文档 =====
       case '文档':
+        // PDF
         if (mimeType == 'application/pdf') {
-          return ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'text/plain'];
+          return ['image/png', 'image/jpeg',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain'];
         }
-        if (mimeType.contains('word') || mimeType.contains('opendocument.text') || mimeType == 'application/rtf') {
-          return ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        // ODT
+        if (mimeType == 'application/vnd.oasis.opendocument.text') {
+          return ['application/pdf', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         }
-        if (mimeType.contains('excel') || mimeType.contains('opendocument.spreadsheet')) {
-          return ['application/pdf', 'text/csv'];
+        // ODS
+        if (mimeType == 'application/vnd.oasis.opendocument.spreadsheet') {
+          return ['application/pdf', 'text/csv', 'text/plain'];
         }
-        if (mimeType == 'text/plain' || mimeType == 'text/csv' || mimeType.startsWith('text/')) {
-          return ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        // ODP
+        if (mimeType == 'application/vnd.oasis.opendocument.presentation') {
+          return ['application/pdf', 'text/plain'];
         }
+        // Word/DOCX
+        if (mimeType.contains('word') || mimeType == 'application/rtf') {
+          return ['application/pdf', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // Excel/XLSX
+        if (mimeType.contains('excel')) {
+          return ['application/pdf', 'text/csv', 'text/plain'];
+        }
+        // PPT/PPTX
+        if (mimeType.contains('powerpoint') || mimeType.contains('presentation')) {
+          return ['application/pdf'];
+        }
+        // EPUB
+        if (mimeType == 'application/epub+zip') {
+          return ['application/pdf', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // HTML
+        if (mimeType == 'text/html') {
+          return ['application/pdf', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // JSON
+        if (mimeType == 'application/json') {
+          return ['text/csv', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // CSV
+        if (mimeType == 'text/csv') {
+          return ['application/pdf', 'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // 纯文本/代码/Markdown/XML/YAML/RTF
+        if (mimeType == 'text/plain' || mimeType.startsWith('text/') || mimeType == 'application/xml' ||
+            mimeType == 'application/rtf') {
+          return ['application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        }
+        // 兜底
         return ['application/pdf'];
+
+      // ===== 压缩包 =====
       case '压缩包':
         return ['application/zip'];
+
+      // ===== 音频/视频 =====
       case '音频':
-        return ['audio/wav', 'audio/mpeg'];
       case '视频':
-        return ['video/mp4'];
+        return [];
+
+      // ===== 其他 =====
       default:
         return [];
     }

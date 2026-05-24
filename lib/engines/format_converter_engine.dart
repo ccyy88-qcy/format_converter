@@ -62,7 +62,7 @@ class FormatConverterEngine {
       }
 
       return result;
-    } catch (e, stack) {
+    } catch (e) {
       return ConversionResult(success: false, error: '转换失败: $e');
     }
   }
@@ -181,7 +181,7 @@ class FormatConverterEngine {
     final text = await File(input).readAsString();
 
     cb?.call(0.3, '生成PDF...');
-    final pdf = pdf = pw.Document();
+    final pdf = pw.Document();
     final lines = text.split('\n');
 
     pdf.addPage(pw.MultiPage(
@@ -227,7 +227,7 @@ class FormatConverterEngine {
 
       if (text.isEmpty) {
         // 回退：直接用文件路径
-        text = await File(input).readAsString(encoding: const SystemEncoding());
+        text = await File(input).readAsString();
       }
 
       cb?.call(0.4, '提取文本完成，生成PDF...');
@@ -533,12 +533,15 @@ ${lines.map((line) => '''    <w:p>
       } else if (ext == '.7z') {
         return ConversionResult(success: false, error: '7z解压需要原生库，暂不支持');
       } else if (ext == '.rar') {
-        return ConversionResult(success: false, error = 'RAR解压暂不支持');
+        return ConversionResult(success: false, error: 'RAR解压暂不支持');
       } else if (ext == '.tar' || ext == '.gz' || ext == '.tgz') {
+        List<int> decodedBytes;
         if (ext == '.gz' || ext == '.tgz') {
-          bytes = GZipDecoder().decodeBytes(bytes);
+          decodedBytes = GZipDecoder().decodeBytes(bytes);
+        } else {
+          decodedBytes = bytes;
         }
-        archive = TarDecoder().decodeBytes(bytes);
+        archive = TarDecoder().decodeBytes(decodedBytes);
       } else {
         return ConversionResult(success: false, error: '不支持解压 $ext 格式');
       }

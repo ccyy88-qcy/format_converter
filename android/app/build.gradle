@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace "com.alee.formatconverter"
-    compileSdk 34
+    compileSdk 35
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -18,14 +18,10 @@ android {
         jvmTarget = '17'
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
     defaultConfig {
         applicationId "com.alee.formatconverter"
         minSdk 21
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0.0"
         multiDexEnabled true
@@ -34,17 +30,12 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-        minifyEnabled false
-        shrinkResources false
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
 
 flutter {
     source '../..'
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
-    implementation 'androidx.multidex:multidex:2.0.1'
 }

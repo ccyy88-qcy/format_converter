@@ -12,13 +12,7 @@ subprojects {
 }
 
 subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                namespace project.group
-            }
-        }
-    }
+    project.evaluationDependsOn(':app')
 }
 
 task clean(type: Delete) {

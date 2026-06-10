@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
 
@@ -189,7 +190,7 @@ class FileFormatDetector {
   static String _detectZipSubtype(Uint8List bytes, String? filePath) {
     // 尝试读取ZIP内部文件名
     try {
-      final content = String.fromCharCodes(bytes.take(4096));
+      final content = utf8.decode(bytes.take(4096));
       if (content.contains('[Content_Types].xml')) {
         if (content.contains('word/')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         if (content.contains('xl/')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';

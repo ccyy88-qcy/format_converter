@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
@@ -394,7 +395,7 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
       final archive = ZipDecoder().decodeBytes(bytes);
       for (final file in archive.files) {
         if (file.name == xmlPath && file.content != null) {
-          return String.fromCharCodes(file.content!)
+          return utf8.decode(file.content!)
             .replaceAll(RegExp(r'<[^>]+>'), '\n')
             .replaceAll(RegExp(r'\n{3,}'), '\n\n')
             .trim();
@@ -412,15 +413,34 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
       StringBuffer sb = StringBuffer();
       for (final f in archive.files) {
         if (f.name == 'xl/sharedStrings.xml' && f.content != null) {
-          final xml = String.fromCharCodes(f.content!);
-          for (final m in RegExp(r'<t[^>]*>([^<]*)</t>').allMatches(xml)) {
+          final xmlStr = utf8.decode(f.content!);
+          for (final m in RegExp(r'<t[^>]*>([^<]*)</t>').allMatches(xmlStr)) {
             sharedStrings.add(m.group(1) ?? '');
           }
         }
         if (f.name.startsWith('xl/worksheets/sheet') && f.name.endsWith('.xml') && f.content != null) {
-          final xml = String.fromCharCodes(f.content!);
-          for (final m in RegExp(r'<c[^>]*r="([^"]*)"[^>]*>(?:<v>([^<]*)</v>)?</c>').allMatches(xml)) {
-            sb.write('${m.group(1)}: ${m.group(2) ?? ''}\n');
+          final xmlStr = utf8.decode(f.content!);
+          for (final row in RegExp(r'<row[^>]*>.*?</row>', dotAll: true).allMatches(xmlStr)) {
+            final cells = <String>[];
+            for (final c in RegExp(r'<c[^>]*>.*?</c>', dotAll: true).allMatches(row.group(0)!)) {
+              final cellXml = c.group(0)!;
+              String val = '';
+              if (cellXml.contains('t="s"')) {
+                final vMatch = RegExp(r'<v>(\d+)</v>').firstMatch(cellXml);
+                if (vMatch != null) {
+                  final idx = int.parse(vMatch.group(1)!);
+                  val = idx < sharedStrings.length ? sharedStrings[idx] : '';
+                }
+              } else if (cellXml.contains('t="inlineStr"')) {
+                final tMatch = RegExp(r'<is><t[^>]*>([^<]*)</t></is>').firstMatch(cellXml);
+                if (tMatch != null) val = tMatch.group(1) ?? '';
+              } else {
+                final vMatch = RegExp(r'<v>([^<]*)</v>').firstMatch(cellXml);
+                if (vMatch != null) val = vMatch.group(1) ?? '';
+              }
+              cells.add(val);
+            }
+            if (cells.isNotEmpty) sb.writeln(cells.join('\t'));
           }
         }
       }
@@ -438,25 +458,41 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
       StringBuffer sb = StringBuffer();
       for (final f in archive.files) {
         if (f.name == 'xl/sharedStrings.xml' && f.content != null) {
-          for (final m in RegExp(r'<t[^>]*>([^<]*)</t>').allMatches(String.fromCharCodes(f.content!))) {
+          final xmlStr = utf8.decode(f.content!);
+          for (final m in RegExp(r'<t[^>]*>([^<]*)</t>').allMatches(xmlStr)) {
             ss.add(m.group(1) ?? '');
           }
         }
         if (f.name.startsWith('xl/worksheets/sheet') && f.name.endsWith('.xml') && f.content != null) {
-          final xml = String.fromCharCodes(f.content!);
-          for (final row in RegExp(r'<row[^>]*>(.*?)</row>', dotAll: true).allMatches(xml)) {
+          final xmlStr = utf8.decode(f.content!);
+          // 提取所有行
+          for (final row in RegExp(r'<row[^>]*>.*?</row>', dotAll: true).allMatches(xmlStr)) {
             final rowData = <String>[];
-            for (final c in RegExp(r'<c[^>]*r="([^"]*)"[^>]*(?:t="s")?[^>]*>(?:<v>([^<]*)</v>)?</c>').allMatches(row.group(1)!)) {
-              final ct = c.group(0);
-              final cv = c.group(2) ?? '';
-              String v = cv;
-              if (ct?.contains('t="s"') == true && int.tryParse(cv) != null) {
-                final idx = int.parse(cv);
-                v = idx < ss.length ? ss[idx] : '';
+            // 提取行中每个单元格
+            for (final c in RegExp(r'<c[^>]*>.*?</c>', dotAll: true).allMatches(row.group(0)!)) {
+              final cellXml = c.group(0)!;
+              // 判断类型: t="s" 共享字符串, t="inlineStr" 内联, 无t=数字
+              final isSharedStr = cellXml.contains('t="s"');
+              final isInlineStr = cellXml.contains('t="inlineStr"');
+              String val = '';
+              if (isSharedStr) {
+                final vMatch = RegExp(r'<v>(\d+)</v>').firstMatch(cellXml);
+                if (vMatch != null) {
+                  final idx = int.parse(vMatch.group(1)!);
+                  val = idx < ss.length ? ss[idx] : '';
+                }
+              } else if (isInlineStr) {
+                final tMatch = RegExp(r'<is><t[^>]*>([^<]*)</t></is>').firstMatch(cellXml);
+                if (tMatch != null) val = tMatch.group(1) ?? '';
+              } else {
+                final vMatch = RegExp(r'<v>([^<]*)</v>').firstMatch(cellXml);
+                if (vMatch != null) val = vMatch.group(1) ?? '';
               }
-              rowData.add('"${v.replaceAll('"', '""')}"');
+              rowData.add('"${val.replaceAll('"', '""')}"');
             }
-            sb.writeln(rowData.join(','));
+            if (rowData.isNotEmpty) {
+              sb.writeln(rowData.join(','));
+            }
           }
         }
       }
@@ -473,7 +509,7 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
       StringBuffer sb = StringBuffer();
       for (final file in archive.files) {
         if ((file.name.endsWith('.html') || file.name.endsWith('.xhtml') || file.name.endsWith('.htm')) && file.content != null) {
-          sb.writeln(String.fromCharCodes(file.content!)
+          sb.writeln(utf8.decode(file.content!)
             .replaceAll(RegExp(r'<[^>]+>'), '\n')
             .replaceAll(RegExp(r'\n{3,}'), '\n\n'));
         }
@@ -503,7 +539,7 @@ ${lines.map((l) => '''    <w:p><w:r><w:t>${l.isEmpty ? '' : l}</w:t></w:r></w:p>
   }
 
   static void _addZipEntry(Archive archive, String name, String content) {
-    final data = content.codeUnits;
+    final data = utf8.encode(content);
     archive.addFile(ArchiveFile(name, data.length, data));
   }
 

@@ -38,3 +38,16 @@ jobs:
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Commit APK to releases branch
+        run: |
+          mkdir -p release_files
+          cp build/app/outputs/flutter-apk/app-release.apk release_files/format_converter.apk
+          git config user.name "CI Bot"
+          git config user.email "ci@format-converter"
+          git checkout -b releases
+          git add release_files/
+          git commit -m "APK build $(date -u '+%Y%m%d-%H%M%S')" || true
+          git push origin releases --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

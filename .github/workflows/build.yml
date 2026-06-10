@@ -24,48 +24,17 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create fresh Flutter project
-        run: |
-          flutter create --org com.alee --project-name format_converter --platforms android tmp_project
-          # Copy our Dart code into the fresh project
-          cp -r lib/* tmp_project/lib/
-          cp pubspec.yaml tmp_project/
-          cp analysis_options.yaml tmp_project/
-          # Copy our Android manifest
-          cp android/app/src/main/AndroidManifest.xml tmp_project/android/app/src/main/
-          # Copy drawable
-          mkdir -p tmp_project/android/app/src/main/res/drawable
-          cp android/app/src/main/res/drawable/ic_launcher.xml tmp_project/android/app/src/main/res/drawable/
-          mv tmp_project format_converter_app
-          cd format_converter_app
-
-      - name: Generate keystore
-        run: |
-          cd format_converter_app
-          keytool -genkey -v -keystore android/app/release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Alee"
-
-      - name: Create key.properties
-        run: |
-          cd format_converter_app
-          echo "storePassword=android" > android/key.properties
-          echo "keyPassword=android" >> android/key.properties
-          echo "keyAlias=release" >> android/key.properties
-          echo "storeFile=release.keystore" >> android/key.properties
-
-      - name: Configure signing
-        run: |
-          cd format_converter_app
-          # Patch build.gradle to use release signing
-          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' android/app/build.gradle.kts 2>/dev/null || true
+      - name: Flutter version
+        run: flutter --version
 
       - name: Install dependencies
-        run: cd format_converter_app && flutter pub get
+        run: flutter pub get
 
       - name: Build APK
-        run: cd format_converter_app && flutter build apk --release --target-platform android-arm64
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: format_converter_app/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
